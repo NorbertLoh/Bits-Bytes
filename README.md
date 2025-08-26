@@ -21,3 +21,15 @@ Setup instructions for the backend server using FastAPI and Uvicorn.
     ```bash
     uvicorn api.main:app --host 0.0.0.0 --port 8000
     ```
+
+# Frontend
+Setup instructions for the frontend using Lynx.
+1. Navigate to the frontend directory and install dependencies:
+    ```bash
+    cd frontend
+    npm install
+    ```
+2. Start the development server:
+    ```bash
+    npm run dev
+    ```
