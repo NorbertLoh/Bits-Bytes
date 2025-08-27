@@ -12,7 +12,7 @@ class QuestionRequest(BaseModel):
 @app.post("/ask")
 async def ask_question(request: QuestionRequest):
     """
-    Endpoint to ask a question to the RAG pipeline.
+    Endpoint to validate a feature from the text area to the RAG pipeline.
     """
     try:
         answer = run_rag_pipeline(request.question)
