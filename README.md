@@ -23,7 +23,7 @@ Setup instructions for the backend server using FastAPI and Uvicorn.
     ```
 
 # Frontend
-Setup instructions for the frontend using Lynx.
+Setup instructions for the frontend using React.
 1. Navigate to the frontend directory and install dependencies:
     ```bash
     cd frontend
@@ -31,5 +31,5 @@ Setup instructions for the frontend using Lynx.
     ```
 2. Start the development server:
     ```bash
-    npm run dev
+    npm start
     ```

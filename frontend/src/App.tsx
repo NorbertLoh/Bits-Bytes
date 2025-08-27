@@ -1,55 +1,27 @@
-import { useCallback, useEffect, useState } from '@lynx-js/react'
+import React, { useState, useCallback } from 'react';
+import { AppView } from './types/types';
+import ManualValidator from './components/ManualValidator';
+import BulkProcessor from './components/BulkProcessor';
+import Header from './components/Header';
 
-import './App.css'
-import arrow from './assets/arrow.png'
-import lynxLogo from './assets/lynx-logo.png'
-import reactLynxLogo from './assets/react-logo.png'
+const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<AppView>(AppView.MANUAL);
 
-export function App(props: {
-  onRender?: () => void
-}) {
-  const [alterLogo, setAlterLogo] = useState(false)
-
-  useEffect(() => {
-    console.info('Hello, ReactLynx')
-  }, [])
-  props.onRender?.()
-
-  const onTap = useCallback(() => {
-    'background only'
-    setAlterLogo(prevAlterLogo => !prevAlterLogo)
-  }, [])
+  const handleViewChange = useCallback((view: AppView) => {
+    setCurrentView(view);
+  }, []);
 
   return (
-    <view>
-      <view className='Background' />
-      <view className='App'>
-        <view className='Banner'>
-          <view className='Logo' bindtap={onTap}>
-            {alterLogo
-              ? <image src={reactLynxLogo} className='Logo--react' />
-              : <image src={lynxLogo} className='Logo--lynx' />}
-          </view>
-          <text className='Title'>test</text>
-          <text className='Subtitle'>on Lynx</text>
-        </view>
-        <view className='Content'>
-          <image src={arrow} className='Arrow' />
-          <text className='Description'>Tap the logo and have fun!</text>
-          <text className='Hint'>
-            Edit<text
-              style={{
-                fontStyle: 'italic',
-                color: 'rgba(255, 255, 255, 0.85)',
-              }}
-            >
-              {' src/App.tsx '}
-            </text>
-            to see updates!
-          </text>
-        </view>
-        <view style={{ flex: 1 }} />
-      </view>
-    </view>
-  )
-}
+    <div className="min-h-screen bg-black text-slate-200 font-sans">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <Header currentView={currentView} onViewChange={handleViewChange} />
+        <main className="mt-6">
+          {currentView === AppView.MANUAL && <ManualValidator />}
+          {currentView === AppView.BULK && <BulkProcessor />}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default App;
