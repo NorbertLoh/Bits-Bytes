@@ -35,18 +35,19 @@ class ComplianceStatus(BaseModel):
     """
     Schema for the geo-regulation compliance check.
     """
-    compliance_status: Literal["Compliant", "Non-Compliant", "Requires Further Review"] = Field(
+    compliance_status: Literal["Compliance Needed", "No Compliance Needed", "Requires Further Review"] = Field(
         ...,
-        description="The determined compliance status of the feature in the given location."
-    )
-    summary_of_findings: str = Field(
-        ...,
-        description="A brief explanation of the findings, citing the specific regulations from the context."
+        description="The determined compliance status of the feature."
     )
     supporting_regulations: List[str] = Field(
         ...,
         description="A list of specific regulations or laws that are most relevant to the determination."
     )
+    Reasoning: str = Field(
+        ...,
+        description="A brief explanation why the regulations are related to the feature and users."
+    )
+
     recommendations: str = Field(
         ...,
         description="Next steps or recommendations for achieving or verifying compliance."
@@ -114,6 +115,38 @@ class GraphState(TypedDict):
     documents: List[Document]
     generation: str
 
+def rewrite_question(state: GraphState) -> GraphState:
+    """
+    Analyzes the user's feature description and generates a list of
+    potential geo-compliance areas for investigation.
+    """
+    print("---ANALYZING FEATURE FOR COMPLIANCE CONCEPTS---")
+    question = state["question"]
+    
+    analysis_prompt = ChatPromptTemplate.from_template(
+        "You are an AI-powered geo-regulation checker. Your task is to analyze a given feature description and determine if it could potentially violate or require specific actions for compliance with any laws or regulations, especially those related to data privacy, consumer protection, and the safety of minors. You do not know what specific regulations exist, but you can identify the concepts that a feature's design and function touch on, which could have legal implications. \n\n"
+        "Based on the following feature description, what potential geo-compliance issues, requirements, or areas of concern should be investigated? Focus on high-level concepts rather than specific laws. \n\n"
+        "---FEATURE DESCRIPTION---"
+        "{question}"
+        "\n\n"
+        "Answer in a detailed, bulleted list. Each bullet point should start with a specific area of concern (e.g., 'Age Verification', 'Data Privacy', 'Parental Consent') followed by a brief explanation of why this feature might be at risk."
+    )
+
+    rewrite_llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL)
+    analysis_chain = analysis_prompt | rewrite_llm
+    
+    compliance_concepts_response = analysis_chain.invoke({"question": question})
+    
+    # The rewritten query for retrieval is the LLM's full response.
+    # It contains all the concepts identified.
+    rewritten_question_str = compliance_concepts_response.content.strip()
+    
+    print(f"Original question: '{question}'")
+    print(f"Generated compliance concepts:\n{rewritten_question_str}")
+
+    return {"question": rewritten_question_str, "documents": None, "generation": None}
+
+
 def retrieve_documents(state: GraphState) -> GraphState:
     """Retrieves documents based on the question and updates the state."""
     print("---RETRIEVING DOCUMENTS---")
@@ -172,11 +205,16 @@ def generate_answer(state: GraphState) -> GraphState:
 
 # --- 4. BUILD AND COMPILE THE GRAPH ---
 workflow = StateGraph(GraphState)
+
+workflow.add_node("rewrite", rewrite_question)
 workflow.add_node("retrieve", retrieve_documents)
 workflow.add_node("generate", generate_answer)
-workflow.set_entry_point("retrieve")
+
+workflow.set_entry_point("rewrite")
+workflow.add_edge("rewrite", "retrieve")
 workflow.add_edge("retrieve", "generate")
 workflow.add_edge("generate", END)
+
 app_pipeline = workflow.compile()
 
 def run_rag_pipeline(question: str) -> str:
