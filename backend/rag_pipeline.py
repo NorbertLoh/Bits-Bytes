@@ -1,3 +1,4 @@
+import json
 import os
 import pandas as pd
 from typing import TypedDict, List
@@ -5,8 +6,12 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, Docx2txtLoader
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import OllamaEmbeddings
+from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, END
+from pydantic import BaseModel, Field
+from typing import List, Literal
 
 # --- 1. CONFIGURATION ---
 # Define all configurations in one place for easy modification
@@ -25,6 +30,27 @@ DOCUMENT_PATHS = [
     "regulations/Utah_Social_Media_Regulation_Act.pdf",
     "terminologies/terminologies.xlsx"
 ]
+
+class ComplianceStatus(BaseModel):
+    """
+    Schema for the geo-regulation compliance check.
+    """
+    compliance_status: Literal["Compliant", "Non-Compliant", "Requires Further Review"] = Field(
+        ...,
+        description="The determined compliance status of the feature in the given location."
+    )
+    summary_of_findings: str = Field(
+        ...,
+        description="A brief explanation of the findings, citing the specific regulations from the context."
+    )
+    supporting_regulations: List[str] = Field(
+        ...,
+        description="A list of specific regulations or laws that are most relevant to the determination."
+    )
+    recommendations: str = Field(
+        ...,
+        description="Next steps or recommendations for achieving or verifying compliance."
+    )
 
 # --- 2. DOCUMENT LOADING AND PROCESSING ---
 def load_excel_as_documents(excel_path: str) -> List[Document]:
@@ -96,29 +122,53 @@ def retrieve_documents(state: GraphState) -> GraphState:
     return {"documents": documents, "question": question}
 
 def generate_answer(state: GraphState) -> GraphState:
-    """Generates an answer using retrieved documents and updates the state."""
-    print("---GENERATING ANSWER---")
+    """Generates a structured answer using retrieved documents and updates the state."""
+    print("---GENERATING STRUCTURED ANSWER---")
     question = state["question"]
     documents = state["documents"]
-    
+
     # Simple RAG prompt template
     prompt_template = (
-        "Use the following pieces of context to answer the question at the end.\n"
-        "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
-        "Context: {context}\n"
-        "Question: {question}\n"
-        "Helpful Answer:"
+        "You are an AI-powered geo-regulation checker. Your task is to analyze "
+        "the provided context to determine if a feature is compliant with "
+        "local laws. Your final answer MUST be in the specified JSON format."
+        "\n\n"
+        "---CONTEXT---"
+        "{context}"
+        "\n\n"
+        "---USER QUESTION---"
+        "Here is the feature and feature description to validate:"
+        "{question}"
+        "\n\n"
+        "Answer:"
     )
+
+    # Convert the prompt to a ChatPromptTemplate
+    prompt = ChatPromptTemplate.from_template(prompt_template)
+    
+    # Initialize the LLM
+    llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL)
+    
+    # Create the structured output chain
+    # The `with_structured_output` method automatically handles the JSON schema for you.
+    structured_llm = llm.with_structured_output(ComplianceStatus, method='json_schema')
+    
+    # Create the chain to invoke
+    rag_chain = prompt | structured_llm
     
     # Format the context for the prompt
     context_str = "\n\n".join([doc.page_content for doc in documents])
-    prompt = prompt_template.format(context=context_str, question=question)
-
-    # Invoke the LLM
-    llm = OllamaLLM(model=LLM_MODEL, base_url=OLLAMA_BASE_URL)
-    generation = llm.invoke(prompt)
     
-    return {"documents": documents, "question": question, "generation": generation}
+    # Invoke the chain to get the structured response
+    generation = rag_chain.invoke({"context": context_str, "question": question})
+
+    # The result is a Pydantic object, which you can easily convert to a dictionary or JSON
+    # For your current pipeline, you'll need a string.
+    # Note: If your graph used a more complex state, you could pass the Pydantic object directly.
+    # For now, let's convert it to a pretty JSON string.
+    generation_str = generation.model_dump_json(indent=2)
+    
+    return {"documents": documents, "question": question, "generation": generation_str}
 
 # --- 4. BUILD AND COMPILE THE GRAPH ---
 workflow = StateGraph(GraphState)
@@ -133,4 +183,5 @@ def run_rag_pipeline(question: str) -> str:
     """Function to encapsulate running the langgraph pipeline."""
     inputs = {"question": question}
     final_state = app_pipeline.invoke(inputs)
+    print(final_state)
     return final_state['generation']
