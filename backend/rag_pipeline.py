@@ -35,22 +35,21 @@ class ComplianceStatus(BaseModel):
     """
     Schema for the geo-regulation compliance check.
     """
-    compliance_status: Literal["Compliance Needed", "No Compliance Needed", "Requires Further Review"] = Field(
+    feature_type: Literal["Business Driven", "Legal Requirement", "Unclassified"] = Field(
         ...,
-        description="The determined compliance status of the feature."
+        description="Determines if the feature is driven by business needs or legal requirements."
+    )
+    compliance_status: Literal["Compliance Logic Needed", "No Compliance Logic Needed", "Requires Further Review"] = Field(
+        ...,
+        description="Determines if the feature requires geo-specific compliance logic for legal requirements."
     )
     supporting_regulations: List[str] = Field(
         ...,
-        description="A list of specific regulations or laws that are most relevant to the determination."
+        description="A list of specific regulations or laws that the compliance logic is for. If feature type is unclassified or not enough information, this can be an empty list."
     )
-    Reasoning: str = Field(
+    reasoning: str = Field(
         ...,
-        description="A brief explanation why the regulations are related to the feature and users."
-    )
-
-    recommendations: str = Field(
-        ...,
-        description="Next steps or recommendations for achieving or verifying compliance."
+        description="A brief explanation of why this compliance status was determined. If the feature is business driven, explain why no compliance logic is needed."
     )
 
 # --- 2. DOCUMENT LOADING AND PROCESSING ---
@@ -124,8 +123,8 @@ def rewrite_question(state: GraphState) -> GraphState:
     question = state["question"]
     
     analysis_prompt = ChatPromptTemplate.from_template(
-        "You are an AI-powered geo-regulation checker. Your task is to analyze a given feature description and determine if it could potentially violate or require specific actions for compliance with any laws or regulations, especially those related to data privacy, consumer protection, and the safety of minors. You do not know what specific regulations exist, but you can identify the concepts that a feature's design and function touch on, which could have legal implications. \n\n"
-        "Based on the following feature description, what potential geo-compliance issues, requirements, or areas of concern should be investigated? Focus on high-level concepts rather than specific laws. \n\n"
+        "You are an AI-powered geo-regulation checker. Your task is to analyze a given feature description and determine if it requires geo-specific compliance actions. \n\n"
+        "Based on the following feature description, determine if there are any potential geo-compliance issues, requirements, or areas of concern that would be related. If there is none, just state that. Focus on high-level concepts rather than specific laws. \n\n"
         "---FEATURE DESCRIPTION---"
         "{question}"
         "\n\n"
@@ -163,9 +162,15 @@ def generate_answer(state: GraphState) -> GraphState:
     # Simple RAG prompt template
     prompt_template = (
         "You are an AI-powered geo-regulation checker. Your task is to analyze "
-        "the provided context to determine if a feature is compliant with "
-        "local laws. Your final answer MUST be in the specified JSON format."
+        "the provided context to determine if a feature requires geo-specific compliance actions to meet legal requirement. "
+        "If the feature is business driven, select 'No Compliance Logic Needed'. If uncertain, select 'Requires Further Review'. "
+        "Only use the information provided in the context to make your determination. "
+        "Your final answer MUST be in the specified JSON format."
         "\n\n"
+        "---EXAMPLES---"
+        "'Feature reads user location to enforce France's copyright rules (download blocking)' - 'Compliance Logic Needed'"
+        "'Geofences feature rollout in US for market testing' - 'No Compliance Logic Needed' (Business decision, not regulatory)'"
+        "'A video filter feature is available globally except KR' - 'Requires Further Review' (didn't specify the intention, need human evaluation)"
         "---CONTEXT---"
         "{context}"
         "\n\n"
@@ -173,7 +178,6 @@ def generate_answer(state: GraphState) -> GraphState:
         "Here is the feature and feature description to validate:"
         "{question}"
         "\n\n"
-        "Answer:"
     )
 
     # Convert the prompt to a ChatPromptTemplate
@@ -200,7 +204,6 @@ def generate_answer(state: GraphState) -> GraphState:
     # Note: If your graph used a more complex state, you could pass the Pydantic object directly.
     # For now, let's convert it to a pretty JSON string.
     generation_str = generation.model_dump_json(indent=2)
-    
     return {"documents": documents, "question": question, "generation": generation_str}
 
 # --- 4. BUILD AND COMPILE THE GRAPH ---
