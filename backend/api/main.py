@@ -1,11 +1,25 @@
 from io import BytesIO
 import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 from rag_pipeline import run_rag_pipeline
 
 app = FastAPI(title="RAG Pipeline API")
+
+# --- CORS Middleware Configuration ---
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # List of allowed origins
+    allow_credentials=True, # Allow cookies and credentials with the request
+    allow_methods=["*"],    # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],    # Allow all headers
+)
 
 # Pydantic model for request body
 class QuestionRequest(BaseModel):
@@ -18,6 +32,7 @@ async def ask_question(request: QuestionRequest):
     """
     try:
         answer = run_rag_pipeline(request.question)
+        print(answer)
         return {"question": request.question, "answer": answer}
     except Exception as e:
         # Basic error handling

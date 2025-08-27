@@ -1,14 +1,16 @@
-import React from 'react';
-import type { AnalysisResult } from '../types/types';
-import { ComplianceBadge } from './ComplianceBadge';
-import { LightbulbIcon, BookIcon, ShieldIcon } from './../icons/icons';
+import React from "react";
+import type { AnalysisResult } from "../types/types";
+import { ComplianceBadge } from "./ComplianceBadge";
+import { LightbulbIcon, BookIcon, ShieldIcon } from "./../icons/icons";
+import { FeatureTypeBadge } from "./FeatureTypeBadge";
 
 interface ResultCardProps {
   result: AnalysisResult;
 }
 
 const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
-  const { needsComplianceLogic, reasoning, relatedRegulations } = result;
+  const { feature_type, compliance_status, reasoning, supporting_regulations } =
+    result;
 
   return (
     <div className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-6 space-y-6 animate-fade-in">
@@ -17,7 +19,10 @@ const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
           <ShieldIcon />
           Compliance Analysis
         </h2>
-        <ComplianceBadge needsCompliance={needsComplianceLogic} />
+        <div className="flex flex-wrap gap-2">
+          <FeatureTypeBadge featureType={feature_type} />
+          <ComplianceBadge needsCompliance={compliance_status} />
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -29,16 +34,19 @@ const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
           {reasoning}
         </p>
       </div>
-      
-      {relatedRegulations && relatedRegulations.length > 0 && (
+
+      {supporting_regulations && supporting_regulations.length > 0 && (
         <div className="space-y-4">
           <h3 className="font-semibold text-lg text-cyan-400 flex items-center gap-2">
             <BookIcon />
             Potentially Related Regulations
           </h3>
           <ul className="space-y-2">
-            {relatedRegulations.map((reg, index) => (
-              <li key={index} className="bg-slate-800 p-3 rounded-md border border-slate-700 text-slate-300">
+            {supporting_regulations.map((reg, index) => (
+              <li
+                key={index}
+                className="bg-slate-800 p-3 rounded-md border border-slate-700 text-slate-300"
+              >
                 {reg}
               </li>
             ))}
