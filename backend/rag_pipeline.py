@@ -116,6 +116,7 @@ retriever = vectorstore.as_retriever()
 class GraphState(TypedDict):
     """Represents the state of our graph."""
     question: str
+    memory: list
     documents: List[Document]
     generation: str
 
@@ -126,12 +127,15 @@ def rewrite_question(state: GraphState) -> GraphState:
     """
     print("---ANALYZING FEATURE FOR COMPLIANCE CONCEPTS---")
     question = state["question"]
+    memory = state["memory"]
     
     analysis_prompt = ChatPromptTemplate.from_template(
         "You are an AI-powered geo-regulation checker. Your task is to analyze a given feature description and determine if it requires geo-specific compliance actions. \n\n"
         "Based on the following feature description, determine if there are any potential geo-compliance issues, requirements, or areas of concern that would be related. If there is none, just state that. Focus on high-level concepts rather than specific laws. \n\n"
         "---FEATURE DESCRIPTION---"
         "{question}"
+        "---ADDITIONAL CONTEXT---"
+        "{memory}"
         "\n\n"
         "Answer in a detailed, bulleted list. Each bullet point should start with a specific area of concern (e.g., 'Age Verification', 'Data Privacy', 'Parental Consent') followed by a brief explanation of why this feature might be at risk."
     )
@@ -139,9 +143,9 @@ def rewrite_question(state: GraphState) -> GraphState:
     rewrite_llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL,
         **OLLAMA_CHAT_OPTIONS)
     analysis_chain = analysis_prompt | rewrite_llm
-    
-    compliance_concepts_response = analysis_chain.invoke({"question": question})
-    
+
+    compliance_concepts_response = analysis_chain.invoke({"question": question, "memory": memory})
+
     # The rewritten query for retrieval is the LLM's full response.
     # It contains all the concepts identified.
     rewritten_question_str = compliance_concepts_response.content.strip()
@@ -164,6 +168,7 @@ def generate_answer(state: GraphState) -> GraphState:
     print("---GENERATING STRUCTURED ANSWER---")
     question = state["question"]
     documents = state["documents"]
+    memory = state["memory"]
 
     # Simple RAG prompt template
     prompt_template = (
@@ -179,6 +184,9 @@ def generate_answer(state: GraphState) -> GraphState:
         "'A video filter feature is available globally except KR' - 'Requires Further Review' (didn't specify the intention, need human evaluation)"
         "---CONTEXT---"
         "{context}"
+        "\n\n"
+        "---ADDITIONAL CONTEXT---"
+        "{memory}"
         "\n\n"
         "---USER QUESTION---"
         "Here is the feature and feature description to validate:"
@@ -204,7 +212,7 @@ def generate_answer(state: GraphState) -> GraphState:
     context_str = "\n\n".join([doc.page_content for doc in documents])
     
     # Invoke the chain to get the structured response
-    generation = rag_chain.invoke({"context": context_str, "question": question})
+    generation = rag_chain.invoke({"context": context_str, "question": question, "memory": memory})
 
     # The result is a Pydantic object, which you can easily convert to a dictionary or JSON
     # For your current pipeline, you'll need a string.
@@ -227,9 +235,9 @@ workflow.add_edge("generate", END)
 
 app_pipeline = workflow.compile()
 
-def run_rag_pipeline(question: str) -> str:
+def run_rag_pipeline(question: str, memory: list) -> str:
     """Function to encapsulate running the langgraph pipeline."""
-    inputs = {"question": question}
+    inputs = {"question": question, "memory": memory}
     final_state = app_pipeline.invoke(inputs)
     print(final_state)
     return final_state['generation']

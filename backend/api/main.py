@@ -24,6 +24,7 @@ app.add_middleware(
 # Pydantic model for request body
 class QuestionRequest(BaseModel):
     question: str
+    memory: list
 
 @app.post("/ask")
 async def ask_question(request: QuestionRequest):
@@ -31,7 +32,7 @@ async def ask_question(request: QuestionRequest):
     Endpoint to validate a feature from the text area to the RAG pipeline.
     """
     try:
-        answer = run_rag_pipeline(request.question)
+        answer = run_rag_pipeline(request.question, request.memory)
         print(answer)
         return {"question": request.question, "answer": answer}
     except Exception as e:

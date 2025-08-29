@@ -11,12 +11,12 @@ const BASE_URL = process.env.BACKEND_BASE_URL || 'http://127.0.0.1:8000';
  * @returns {Promise<any>} The JSON response from the API.
  * @throws {Error} If the network request fails or the response is not ok.
  */
-export const askQuestion = async (question: string) => {
+export const askQuestion = async (question: string, memory: string[]) => {
   // Construct the full URL for the /ask endpoint.
   const url = `${BASE_URL}/ask`;
 
   // Define the request body in a JSON format.
-  const requestBody = { question: question };
+  const requestBody = { question: question, memory: memory };
 
   try {
     // Perform the POST request using the native fetch API.
