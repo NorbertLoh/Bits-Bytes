@@ -31,6 +31,11 @@ DOCUMENT_PATHS = [
     "terminologies/terminologies.xlsx"
 ]
 
+OLLAMA_CHAT_OPTIONS = {
+    # "num_ctx": 40960,  # Sets the context window for the chat model
+    "num_predict": 2048, # Sets the max tokens to generate
+}
+
 class ComplianceStatus(BaseModel):
     """
     Schema for the geo-regulation compliance check.
@@ -131,7 +136,8 @@ def rewrite_question(state: GraphState) -> GraphState:
         "Answer in a detailed, bulleted list. Each bullet point should start with a specific area of concern (e.g., 'Age Verification', 'Data Privacy', 'Parental Consent') followed by a brief explanation of why this feature might be at risk."
     )
 
-    rewrite_llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL)
+    rewrite_llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL,
+        **OLLAMA_CHAT_OPTIONS)
     analysis_chain = analysis_prompt | rewrite_llm
     
     compliance_concepts_response = analysis_chain.invoke({"question": question})
@@ -184,7 +190,8 @@ def generate_answer(state: GraphState) -> GraphState:
     prompt = ChatPromptTemplate.from_template(prompt_template)
     
     # Initialize the LLM
-    llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL)
+    llm = ChatOllama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL,
+        **OLLAMA_CHAT_OPTIONS)
     
     # Create the structured output chain
     # The `with_structured_output` method automatically handles the JSON schema for you.
