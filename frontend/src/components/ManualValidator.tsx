@@ -4,7 +4,11 @@ import ResultCard from './ResultCard';
 import Spinner from './Spinner';
 import { askQuestion } from '../service/service';
 
-const ManualValidator: React.FC = () => {
+interface ManualValidatorProps {
+  memory: string[];
+}
+
+const ManualValidator: React.FC<ManualValidatorProps> = ({ memory }) => {
   const [description, setDescription] = useState<string>('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -26,7 +30,7 @@ const ManualValidator: React.FC = () => {
     setError(null);
     setResult(null);
     try {
-      const analysis = await askQuestion(description);
+      const analysis = await askQuestion(description, memory);
       console.log('Analysis Result:', analysis);
       setResult(analysis);
     } catch (err) {
@@ -34,7 +38,7 @@ const ManualValidator: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [description]);
+  }, [description, memory]);
   
   const handleSetExample = (text: string) => {
       setDescription(text);
