@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import type { AnalysisResult } from '../types/types';
 import ResultCard from './ResultCard';
 import Spinner from './Spinner';
+import { askQuestion } from '../service/service';
 
 const ManualValidator: React.FC = () => {
   const [description, setDescription] = useState<string>('');
@@ -17,21 +18,22 @@ const ManualValidator: React.FC = () => {
   ];
 
   const handleValidate = useCallback(async () => {
-    // if (!description.trim()) {
-    //   setError("Please enter a feature description.");
-    //   return;
-    // }
-    // setIsLoading(true);
-    // setError(null);
-    // setResult(null);
-    // try {
-    //   const analysis = await analyzeFeatureDescription(description);
-    //   setResult(analysis);
-    // } catch (err) {
-    //   setError(err instanceof Error ? err.message : "An unknown error occurred.");
-    // } finally {
-    //   setIsLoading(false);
-    // }
+    if (!description.trim()) {
+      setError("Please enter a feature description.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const analysis = await askQuestion(description);
+      console.log('Analysis Result:', analysis);
+      setResult(analysis);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred.");
+    } finally {
+      setIsLoading(false);
+    }
   }, [description]);
   
   const handleSetExample = (text: string) => {

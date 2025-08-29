@@ -5,7 +5,8 @@ export enum AppView {
 }
 
 export interface AnalysisResult {
-  needsComplianceLogic: boolean;
+  feature_type: string;
+  compliance_status: string;
   reasoning: string;
-  relatedRegulations: string[];
+  supporting_regulations: string[];
 }

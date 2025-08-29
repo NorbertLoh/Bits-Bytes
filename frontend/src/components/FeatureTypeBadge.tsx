@@ -1,35 +1,35 @@
 import React from 'react';
 
-interface ComplianceBadgeProps {
-  needsCompliance: string;
+interface FeatureTypeBadgeProps {
+  featureType: string;
 }
 
-export const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({ needsCompliance }) => {
+export const FeatureTypeBadge: React.FC<FeatureTypeBadgeProps> = ({ featureType }) => {
   const baseClasses = 'px-3 py-1 text-sm font-semibold rounded-full inline-flex items-center';
-  
-  const getStatusConfig = (needsCompliance: string) => {
-    if (needsCompliance === "Compliance Logic Needed") {
+
+  const getStatusConfig = (featureType: string) => {
+    if (featureType === "Business Driven") {
       return {
-        text: 'Compliance Logic Needed',
+        text: 'Business Driven',
         classes: 'bg-red-500/20 text-red-300 border border-red-500/50',
         dot: 'bg-red-400',
       };
     }
-    if (needsCompliance === "No Compliance Logic Needed") {
+    if (featureType === "Legal Requirement") {
       return {
-        text: 'No Compliance Logic Needed',
+        text: 'Legal Requirement',
         classes: 'bg-green-500/20 text-green-300 border border-green-500/50',
         dot: 'bg-green-400',
       };
     }
     return {
-      text: 'Compliance Logic Unknown',
+      text: 'Unclassified',
       classes: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50',
       dot: 'bg-yellow-400',
     };
   };
 
-  const statusConfig = getStatusConfig(needsCompliance);
+  const statusConfig = getStatusConfig(featureType);
 
   return (
     <span className={`${baseClasses} ${statusConfig.classes}`}>
