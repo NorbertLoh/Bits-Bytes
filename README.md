@@ -23,6 +23,9 @@ We decided to used Qwen3-8B as our main LLM model for generation (the largest mo
 
 This attempts to perform supervised fine-tuning (SFT) and knowledge distillation (KD) to enhance the model's performance on specific tasks by learning from high-quality data and a teacher model.
 
+### Pydantic
+By using Pydantic, we are able to ensure the output of the LLM is structured and adheres to a predefined schema. This greatly helps in parsing and utilising the generated content effectively.
+
 ### Pre and Post Guardrails
 #### Query Rewriting
 To ensure that user queries are well-formed and relevant, we implemented a query rewriting step using Ollama's LLM. This step reformulates the user's question to improve clarity and context before passing it to the retrieval and generation components. This helps in reducing ambiguity and enhancing the quality of the retrieved documents.
