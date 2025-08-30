@@ -11,14 +11,14 @@ This project implements a Retrieval-Augmented Generation (RAG) pipeline using Fa
 ### Retrieval-Augmented Generation (RAG) Pipeline
 In order to provide accurate and contextually relevant answers to user queries, we have implemented a Retrieval-Augmented Generation (RAG) pipeline.
 
-The RAG pipeline documents consists of several types of documents:
+The RAG pipeline documents consist of several types of documents:
 * Legal documents (e.g., regulations, laws)
-* Business documents (e.g., company specific terms/jargons)
+* Business documents (e.g., company-specific terms/jargon)
 
 The documents are processed and indexed using FAISS, a popular vector store, to enable efficient retrieval based on semantic similarity.
 
 ### Models
-We decided to used Qwen3-8B as our main LLM model for generation (the largest model we could load locally). This model was finetuned on a custom dataset to better handle domain-specific queries. The finetuning process involved:
+We decided to use Qwen3-8B as our main LLM model for generation (the largest model we could load locally). This model was finetuned on a custom dataset to better handle domain-specific queries. The finetuning process involved:
 * Generating synthetic data using Gemini 2.5 Flash
 
 This attempts to perform supervised fine-tuning (SFT) and knowledge distillation (KD) to enhance the model's performance on specific tasks by learning from high-quality data and a teacher model.
@@ -39,12 +39,12 @@ It will retry the generation step up to 3 times if the hallucination confidence 
 To maintain transparency and accountability, we log all interactions with the RAG pipeline. This includes:
 * User queries (timestamp, feature, feature description, answer)
 
-Since the log cannot be tampered by users, it provides an audit trail for all interactions, which is crucial for compliance and review purposes.
+Since the log cannot be tampered with by users, it provides an audit trail for all interactions, which is crucial for compliance and review purposes.
 
 ### Single and Batch Processing
-The RAG pipeline supports both single question answering and batch processing of multiple queries. This flexibility allows users to efficiently handle large volumes of questions, making it suitable for various applications.
+The RAG pipeline supports both single-question answering and batch processing of multiple queries. This flexibility allows users to efficiently handle large volumes of questions, making it suitable for various applications.
 
-Users would also be able to verify single features without have to upload a CSV file.
+Users would also be able to verify single features without having to upload a CSV file.
 
 ### Memory Integration
 By allowing users to provide additional context or memory, the RAG pipeline can generate more informed and relevant answers.
