@@ -5,14 +5,6 @@ import { uploadAndProcessFile } from "../service/service";
 import { ManualValidatorProps } from "../props";
 
 const BulkProcessor: React.FC<ManualValidatorProps> = ({ memory }) => {
-  // State for PDF to Excel Converter
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [isConvertingPdf, setIsConvertingPdf] = useState(false);
-  const [convertedExcelUrl, setConvertedExcelUrl] = useState<string | null>(
-    null
-  );
-  const [pdfError, setPdfError] = useState<string | null>(null);
-
   // State for Excel Feature Analyser
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [isProcessingExcel, setIsProcessingExcel] = useState(false);
