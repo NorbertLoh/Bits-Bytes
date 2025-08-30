@@ -11,6 +11,7 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, END
 from pydantic import BaseModel, Field
+import logging
 
 # --- 1. CONFIGURATION ---
 # Define all configurations in one place for easy modification
@@ -23,6 +24,14 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 MAX_RETRIES = 3 # Maximum number of retries for the generation step
 HALLUCINATION_CONFIDENCE_THRESHOLD = 0.7 # Minimum confidence score to pass the hallucination check
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler('app.log', mode='a')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
 
 # Document paths for loading
 DOCUMENT_PATHS = [
@@ -344,4 +353,5 @@ def run_rag_pipeline(question: str, memory: list) -> str:
     inputs = {"question": question, "memory": memory, "retries": 0, "is_supported": False, "hallucination_verdict": "", "hallucination_confidence": 0.0}
     final_state = app_pipeline.invoke(inputs)
 
+    logger.info(f"Feature: {question}, Answer: {json.dumps(final_state['generation'], indent=2)}")
     return final_state['generation']

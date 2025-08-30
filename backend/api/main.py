@@ -7,6 +7,7 @@ import uvicorn
 from rag_pipeline import run_rag_pipeline
 from pydantic import BaseModel
 
+
 app = FastAPI(title="RAG Pipeline API")
 
 origins = [
