@@ -148,3 +148,14 @@ Instructions for running the trained GGUF model using Ollama.
     ```bash
     ollama serve
     ```
+
+# Model Weights
+1. Due to upload limits, the model weights are split in 5 parts. Download all parts from the releases section and place them in the `fine_tuning/weights` directory.
+2. Combine the parts using 7zip
+
+# Demo
+
+YouTube Video: [https://www.youtube.com/watch?v=Pf6fJ8ReJFo](https://www.youtube.com/watch?v=Pf6fJ8ReJFo)
+
+[![demo1](./assets/demo1.gif)](./assets/demo1.gif)
+[![demo2](./assets/demo2.gif)](./assets/demo2.gif)
