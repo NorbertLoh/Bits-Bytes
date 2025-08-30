@@ -33,3 +33,36 @@ Setup instructions for the frontend using React.
     ```bash
     npm start
     ```
+
+# Fine-tuning
+Instructions for fine-tuning the model using the provided dataset.
+1. Navigate to the fine-tuning directory:
+    ```bash
+    cd fine_tuning
+    ```
+2. Axolotl requires linux or WSL2 on Windows. Ensure you have the necessary environment set up.
+3. Create and activate a virtual environment:
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
+4. Install the required packages in the virtual environment:
+    ```bash
+    pip install -r requirements.txt
+    ```
+5. Run the notebook:
+    ```bash
+    jupyter notebook
+    ```
+
+# Running Trained GGUF Model
+Instructions for running the trained GGUF model using Ollama.
+1. Load model into Ollama:
+    ```bash
+    cd finetuning
+    ollama create <model-name> -f Modelfile
+    ```
+2. Run the model:
+    ```bash
+    ollama serve
+    ```
