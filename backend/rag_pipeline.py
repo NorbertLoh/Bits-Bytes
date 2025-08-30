@@ -11,6 +11,7 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, END
 from pydantic import BaseModel, Field
+import logging
 
 # --- 1. CONFIGURATION ---
 # Define all configurations in one place for easy modification
@@ -23,6 +24,14 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 MAX_RETRIES = 3 # Maximum number of retries for the generation step
 HALLUCINATION_CONFIDENCE_THRESHOLD = 0.7 # Minimum confidence score to pass the hallucination check
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler('app.log', mode='a')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
 
 # Document paths for loading
 DOCUMENT_PATHS = [
@@ -56,7 +65,7 @@ class ComplianceStatus(BaseModel):
     )
     reasoning: str = Field(
         ...,
-        description="A brief explanation of why this compliance status was determined. If the feature is business driven, explain why no compliance logic is needed. If unsure or does not look like a feature, explain why it was classified as such."
+        description="A brief explanation of why this compliance status was determined. If the feature is business driven, explain why no compliance logic is needed. If unsure or does not look like a feature, explain why it was classified as such. If no intention for the feature is specified, explain that it requires further review."
     )
 
 class HallucinationCheckResult(BaseModel):
@@ -191,6 +200,7 @@ def generate_answer(state: GraphState) -> GraphState:
         "You are an AI-powered geo-regulation checker. Your task is to analyze "
         "the provided context to determine if a feature requires geo-specific compliance actions to meet legal requirement. "
         "If the feature is business driven, select 'No Compliance Logic Needed'. If uncertain, select 'Requires Further Review'. "
+        "If it is a feature and no intention is specified, select 'Requires Further Review'. "
         "Your final answer MUST be in the specified JSON format."
         "\n\n"
         "---EXAMPLES---"
@@ -342,5 +352,6 @@ def run_rag_pipeline(question: str, memory: list) -> str:
     """Function to encapsulate running the langgraph pipeline."""
     inputs = {"question": question, "memory": memory, "retries": 0, "is_supported": False, "hallucination_verdict": "", "hallucination_confidence": 0.0}
     final_state = app_pipeline.invoke(inputs)
-    print(final_state)
+
+    logger.info(f"Feature: {question}, Answer: {json.dumps(final_state['generation'], indent=2)}")
     return final_state['generation']

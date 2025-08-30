@@ -3,10 +3,7 @@ import type { AnalysisResult } from '../types/types';
 import ResultCard from './ResultCard';
 import Spinner from './Spinner';
 import { askQuestion } from '../service/service';
-
-interface ManualValidatorProps {
-  memory: string[];
-}
+import { ManualValidatorProps } from '../props';
 
 const ManualValidator: React.FC<ManualValidatorProps> = ({ memory }) => {
   const [description, setDescription] = useState<string>('');
@@ -15,10 +12,11 @@ const ManualValidator: React.FC<ManualValidatorProps> = ({ memory }) => {
   const [error, setError] = useState<string | null>(null);
   
   const exampleTexts = [
-    "Feature reads user location to enforce France's copyright rules (download blocking).",
-    "Requires age gates specific to Indonesia's Child Protection Law.",
+    "Curfew login blocker with ASL and GH for Utah minors, To comply with the Utah Social Media Regulation Act, we are implementing a curfew-based login restriction for users under 18. The system uses ASL to detect minor accounts and routes enforcement through GH to apply only within Utah boundaries. The feature activates during restricted night hours and logs activity using EchoTrace for auditability. This allows parental control to be enacted without user-facing alerts, operating in ShadowMode during initial rollout.",
+    "PF default toggle with NR enforcement for California teens, As part of compliance with California’s SB976, the app will disable PF by default for users under 18 located in California. This default setting is considered NR to override, unless explicit parental opt-in is provided. Geo-detection is handled via GH, and rollout is monitored with FR logs. The design ensures minimal disruption while meeting the strict personalization requirements imposed by the law.",
     "Geofences feature rollout in US for market testing.",
-    "A video filter feature is available globally except KR."
+    "A video filter feature is available globally except KR.",
+    "hello"
   ];
 
   const handleValidate = useCallback(async () => {

@@ -17,7 +17,7 @@ export const askQuestion = async (question: string, memory: string[]) => {
 
   // Define the request body in a JSON format.
   const requestBody = { question: question, memory: memory };
-
+  console.log("Request Body:", requestBody);
   try {
     // Perform the POST request using the native fetch API.
     const response = await fetch(url, {
@@ -28,7 +28,7 @@ export const askQuestion = async (question: string, memory: string[]) => {
       // Convert the JavaScript object to a JSON string.
       body: JSON.stringify(requestBody),
     });
-
+    console.log("Response:", response);
     // Check if the response was successful (status code 200-299).
     if (!response.ok) {
       const errorData = await response.json();
@@ -53,7 +53,7 @@ export const askQuestion = async (question: string, memory: string[]) => {
  * @returns {Promise<any>} The JSON response from the API.
  * @throws {Error} If the network request fails or the response is not ok.
  */
-export const uploadAndProcessFile = async (file: any) => {
+export const uploadAndProcessFile = async (file: any, memory: string[]) => {
   // Construct the full URL for the /upload_and_process endpoint.
   const url = `${BASE_URL}/upload_and_process`;
 
@@ -61,6 +61,7 @@ export const uploadAndProcessFile = async (file: any) => {
   const formData = new FormData();
   // Append the file to the form data.
   formData.append('file', file);
+  formData.append('memory', JSON.stringify(memory));
 
   try {
     // Perform the POST request. The 'Content-Type' header is automatically
@@ -78,10 +79,19 @@ export const uploadAndProcessFile = async (file: any) => {
 
     // Parse and return the JSON response.
     const data = await response.json();
-    return data;
+    return hexToBlob(data.file);
   } catch (error) {
     // Log and re-throw the error for the calling component.
     console.error('Error in uploadAndProcessFile:', error);
     throw error;
   }
+};
+
+const hexToBlob = (hex: string) => {
+  const matches = hex.match(/[\da-f]{2}/gi);
+  if (!matches) {
+    throw new Error('Invalid hex string');
+  }
+  const uint8Array = new Uint8Array(matches.map(h => parseInt(h, 16)));
+  return new Blob([uint8Array], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };

@@ -1,48 +1,43 @@
+import json
 from io import BytesIO
 import json
 import pandas as pd
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import uvicorn
 from rag_pipeline import run_rag_pipeline
+from pydantic import BaseModel
+
 
 app = FastAPI(title="RAG Pipeline API")
 
-# --- CORS Middleware Configuration ---
 origins = [
     "http://localhost:3000",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # List of allowed origins
-    allow_credentials=True, # Allow cookies and credentials with the request
-    allow_methods=["*"],    # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],    # Allow all headers
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Pydantic model for request body
-class QuestionRequest(BaseModel):
+class AskRequest(BaseModel):
     question: str
-    memory: list
+    memory: list[str]
 
 @app.post("/ask")
-async def ask_question(request: QuestionRequest):
-    """
-    Endpoint to validate a feature from the text area to the RAG pipeline.
-    """
+async def ask_question(request: AskRequest):
     try:
         answer = run_rag_pipeline(request.question, request.memory)
-        print(answer)
         return {"question": request.question, "answer": answer}
     except Exception as e:
-        # Basic error handling
         return {"error": str(e), "message": "An error occurred while processing your request."}, 500
     
 @app.post("/excel")
-async def upload_and_process_excel(file: UploadFile = File(...)):
+async def upload_and_process_excel(file: UploadFile = File(...), memory: str = Form(...)):
     """
     Endpoint to upload an Excel file, process each row with the RAG pipeline,
     and return a new Excel file with the results.
@@ -62,12 +57,11 @@ async def upload_and_process_excel(file: UploadFile = File(...)):
         df = pd.read_excel(BytesIO(excel_data))
         # logger.info(f"Successfully read Excel file with {len(df.index)} rows.")
         
-        memory = []
+        memory = json.loads(memory)
         results = []
         errors = []
         errors_idx = []
 
-        # Iterate through each row of the DataFrame
         for index, row in df.iterrows():
             try:
                 # Get the relevant data from the row
@@ -99,7 +93,11 @@ async def upload_and_process_excel(file: UploadFile = File(...)):
             processed_df = df
             # logger.warning("No rows were successfully processed.")
 
-        # Write the new DataFrame to a BytesIO object
+        for column in processed_df.columns:
+            if processed_df[column].apply(lambda x: isinstance(x, list)).any():
+                print(f"Converting list data in column '{column}' to string format.")
+                processed_df[column] = processed_df[column].apply(lambda x: "\n".join(x) if isinstance(x, list) else x)
+
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             processed_df.to_excel(writer, index=False, sheet_name='Processed_Data')

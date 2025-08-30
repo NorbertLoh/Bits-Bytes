@@ -21,7 +21,7 @@ const App: React.FC = () => {
         <Header currentView={currentView} onViewChange={handleViewChange} />
         <main className="mt-6">
           {currentView === AppView.MANUAL && <ManualValidator memory={memory} />}
-          {currentView === AppView.BULK && <BulkProcessor />}
+          {currentView === AppView.BULK && <BulkProcessor memory={memory} />}
         </main>
       </div>
       <button
