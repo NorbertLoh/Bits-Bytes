@@ -50,12 +50,12 @@ export const askQuestion = async (question: string, memory: string[]) => {
 /**
  * Uploads a file for processing by the RAG pipeline.
  * @param {File} file - The file object to upload.
- * @returns {Promise<any>} The JSON response from the API.
+ * @returns {Promise<Blob>} The processed Excel file as a Blob.
  * @throws {Error} If the network request fails or the response is not ok.
  */
 export const uploadAndProcessFile = async (file: any, memory: string[]) => {
   // Construct the full URL for the /upload_and_process endpoint.
-  const url = `${BASE_URL}/upload_and_process`;
+  const url = `${BASE_URL}/excel`;
 
   // Create a new FormData object to handle file uploads.
   const formData = new FormData();
@@ -77,9 +77,15 @@ export const uploadAndProcessFile = async (file: any, memory: string[]) => {
       throw new Error(errorData.message || 'Network response was not ok');
     }
 
-    // Parse and return the JSON response.
-    const data = await response.json();
-    return hexToBlob(data.file);
+    const blob = await response.blob();
+
+    const errorCount = response.headers.get('X-Errors-Count');
+    if (errorCount && parseInt(errorCount) > 0) {
+      console.warn(`The backend reported ${errorCount} errors during processing.`);
+    }
+    
+    return blob;
+    
   } catch (error) {
     // Log and re-throw the error for the calling component.
     console.error('Error in uploadAndProcessFile:', error);
