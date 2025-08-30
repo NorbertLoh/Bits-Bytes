@@ -18,7 +18,7 @@ The RAG pipeline documents consists of several types of documents:
 The documents are processed and indexed using FAISS, a popular vector store, to enable efficient retrieval based on semantic similarity.
 
 ### Models
-We decided to used Qwen3-8B as our main LLM model for generation. This model was finetuned on a custom dataset to better handle domain-specific queries. The finetuning process involved:
+We decided to used Qwen3-8B as our main LLM model for generation (the largest model we could load locally). This model was finetuned on a custom dataset to better handle domain-specific queries. The finetuning process involved:
 * Generating synthetic data using Gemini 2.5 Flash
 
 This attempts to perform supervised fine-tuning (SFT) and knowledge distillation (KD) to enhance the model's performance on specific tasks by learning from high-quality data and a teacher model.
